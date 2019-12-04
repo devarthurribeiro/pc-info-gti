@@ -1,36 +1,66 @@
-const { app, BrowserWindow } = require('electron')
-const os = require('os')
+const { app, BrowserWindow } = require("electron");
+const os = require("os");
+const si = require("systeminformation");
 
-let mainWindow
+let mainWindow;
 
-function createWindow() {
-  mainWindow = new BrowserWindow({width: 400, height: 600})
+async function createWindow(data) {
+  mainWindow = new BrowserWindow({ width: 400, height: 600 });
+  //mainWindow.webContents.openDevTools();
 
-  mainWindow.loadURL("https://gtiforms.now.sh/")
-  mainWindow.setMenu(null)
-  
-  mainWindow.on('close', () => {
-    mainWindow = null
-  })
+  mainWindow.loadURL("https://gtiforms.now.sh/");
+  mainWindow.setMenu(null);
 
-  const pcData = {}
-
-  pcData.pcName = os.hostname()
-  pcData.networkData = os.networkInterfaces()
-  pcData.cpu = os.cpus()
-  console.log(JSON.stringify(pcData))
+  mainWindow.webContents.on("did-finish-load", async () => {
+    mainWindow.webContents.executeJavaScript(`
+        window.setInitData(${JSON.stringify(data)})
+    `);
+  });
 }
 
-app.on('ready', createWindow)
+app.on("ready", async () => {
+    const data = await getData();
+    createWindow(data)
+});
 
-app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') {
-    app.quit()
+app.on("window-all-closed", function() {
+  if (process.platform !== "darwin") {
+    app.quit();
   }
-})
+});
 
-app.on('activate', function () {
+app.on("activate", function() {
   if (mainWindow === null) {
-    createWindow()
+    createWindow();
   }
-})
+});
+
+async function getData() {
+  const data = {};
+
+  const system = await si.system();
+  const cpu = await si.cpu();
+  const osInfo = await si.osInfo();
+  const disk = await si.diskLayout();
+
+  data.brand = system.manufacturer;
+  data.serial = system.serial;
+  data.model = system.model;
+  data.uuid = system.uuid;
+  data.pcName = os.hostname();
+  data.cpuBrand = cpu.manufacturer.replace("™", "").replace("®", "");
+  data.cpuModel = cpu.brand.replace("™", "").replace("®", "");
+
+  data.ramSize = formatBytes(os.totalmem());
+  data.so = osInfo.distro;
+  data.diskSize = formatBytes(disk[0].size);
+  console.log(data);
+  return data;
+}
+
+function formatBytes(bytes) {
+  const marker = 1024;
+  const decimal = 3;
+  const gigaBytes = marker * marker * marker;
+  return Math.floor((bytes / gigaBytes).toFixed(decimal)) + "gb";
+}
