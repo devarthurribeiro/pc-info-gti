@@ -42,6 +42,7 @@ async function getData() {
   const cpu = await si.cpu();
   const osInfo = await si.osInfo();
   const disk = await si.diskLayout();
+  const nets = await si.networkInterfaces();
 
   data.brand = system.manufacturer;
   data.serial = system.serial;
@@ -54,6 +55,22 @@ async function getData() {
   data.ramSize = formatBytes(os.totalmem());
   data.so = osInfo.distro;
   data.diskSize = formatBytes(disk[0].size);
+
+  const netInfo = nets.find( e => {
+    if(e.iface.toLocaleLowerCase().includes('ethernet')) {
+      return e
+    }
+  }) 
+
+  if(netInfo) {
+    data.ethernetMac = netInfo.mac
+    if(netInfo.speed === 1000) {
+      data.velocityEthernet == '1gb'
+    } else {
+      data.velocityEthernet == '100mb'
+    }
+  }
+
   console.log(data);
   return data;
 }
