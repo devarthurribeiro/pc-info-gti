@@ -11,7 +11,7 @@ async function getPcInfo() {
   const nets = await si.networkInterfaces();
 
   data.brand = system.manufacturer;
-  data.serial = system.serial;
+  data.serial = system.serial.toUpperCase();
   data.model = system.model;
   data.uuid = system.uuid;
   data.pcName = os.hostname();
@@ -22,11 +22,8 @@ async function getPcInfo() {
   data.so = osInfo.distro;
   data.diskSize = formatBytes(disk[0].size);
 
-  const netInfo = nets.find(e => {
-    if (e.iface.toLocaleLowerCase().includes("ethernet")) {
-      return e;
-    }
-  });
+  //pegar o mac por meio do ip
+  const netInfo = getIfaceByIp('10.77', nets)
 
   if (netInfo) {
     data.ethernetMac = netInfo.mac;
@@ -37,9 +34,13 @@ async function getPcInfo() {
     }
   }
 
-  console.log(data);
+  data.net = getIfaceByIp('10.77', nets)
   return data;
 }
+
+function getIfaceByIp(ip, ifaces) {
+  return ifaces.find( iface => iface.ip4.includes(ip))
+} 
 
 function formatBytes(bytes) {
   const marker = 1024;
