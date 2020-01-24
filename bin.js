@@ -1,5 +1,5 @@
-const readline = require('readline');
-const { exec } = require('child_process');
+const readline = require('readline')
+const { exec } = require('child_process')
 
 const getPcInfo = require("./src/util/getPcInfo")
 const sections = require('./src/sections')
@@ -11,29 +11,36 @@ function readNextLine(question) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
-  });
+  })
   
   return new Promise((resolve, reject) => {
     rl.question(`${question}:`, (answer) => {
       console.log(`resposta: ${answer}`)
       resolve(answer)
-      rl.close();
-    });
+      rl.close()
+    })
   })
 }
 
-function changePcName(currentName, newName) {
-  exec(`WMIC computersystem where caption='${currentName}' rename ${newName}`, (err, stdout, stderr) => {
-    if (err) 
-      return;
-    console.log(`stdout: ${stdout}`)
-    console.log(`stderr: ${stderr}`)
+function execShellCommand(cmd) {
+  console.log(cmd)
+  return new Promise((resolve, reject) => {
+   exec(cmd, (error, stdout, stderr) => {
+    if (error) {
+     console.warn(error)
+    }
+    resolve(stdout? stdout : stderr)
+   })
   })
+ }
+
+function changePcName(newName) {
+  return execShellCommand("WMIC COMPUTERSYSTEM WHERE CAPTION='%computername%' RENAME '"+newName.trim()+"'")
 }
 
 function isSo(so, comp) {
   return so.toUpperCase().includes(comp)
-}
+} 
 
 function getSoCode(so) {
   let code = 'N'
@@ -77,11 +84,14 @@ async function startApp() {
   info.sCode = sections.find( s => (info.vlan >= s.init && info.vlan <= s.end))
 
   const pcName = generateName(info)
+  console.log(pcName)
+  const r = await changePcName(pcName)
+  
+  await timeout(5000)
+}
 
-  changePcName(info.pcName, pcName)
-  console.log('====================================');
-  console.log(generateName(info));
-  console.log('====================================');
+function timeout(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 startApp()
