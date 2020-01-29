@@ -1,9 +1,9 @@
 const readline = require('readline')
 const { exec } = require('child_process')
+const request = require('request')
 
 const getPcInfo = require("./src/util/getPcInfo")
 const sections = require('./src/sections')
-const firebase = require('./src/services/firebase')
 
 const CODE_UND = '1122'
 
@@ -101,11 +101,14 @@ async function startApp() {
   console.log(pcName)
   console.log(info)
 
-  try {
-    await firebase.forms.collection('computer').doc(info.serial).set(info)
-  } catch (error) {
-    console.log(error)
-  }
+  request.post('http://10.77.63.41:3000/api/save', { json: info }, (error, res, body) => {
+    if (error) {
+      console.error(error)
+      return
+    }
+    console.log(`statusCode: ${res.statusCode}`)
+    console.log(body)
+  })
   
   await timeout(3000)
 }
