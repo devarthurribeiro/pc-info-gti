@@ -3,6 +3,7 @@ const { exec } = require('child_process')
 
 const getPcInfo = require("./src/util/getPcInfo")
 const sections = require('./src/sections')
+const firebase = require('./src/services/firebase')
 
 const CODE_UND = '1122'
 
@@ -61,8 +62,8 @@ function getSectionCode(ip) {
 
 function generateName(pcInfo) {
   let name = `
-      ${CODE_UND}-${pcInfo.sCode.name}-${ pcInfo.tomboCode.length === 4 ?  pcInfo.tomboCode : 'PPPP'}${pcInfo.type}${getSoCode(pcInfo.so)}
-    `
+      ${CODE_UND}-${pcInfo.section.name}-${ pcInfo.tomboCode.length === 4 ?  pcInfo.tomboCode : 'PPPP'}${pcInfo.type}${getSoCode(pcInfo.so)}
+    `.trim()
   return name
 }
 
@@ -81,13 +82,32 @@ async function startApp() {
 
   info.tomboCode = getLastDigits(tombo, 4)
   info.vlan = info.net.ip4.split('.')[2]
-  info.sCode = sections.find( s => (info.vlan >= s.init && info.vlan <= s.end))
+  info.section = sections.find( s => (info.vlan >= s.init && info.vlan <= s.end))
 
   const pcName = generateName(info)
-  console.log(pcName)
-  const r = await changePcName(pcName)
+  const soCode = getSoCode(info.so)
+
+  info.soCode = soCode
+  info.pcName = pcName
+  info.vlanId = info.section.vlan_id
   
-  await timeout(5000)
+  if(isSo(info.so, 'WINDOW'))
+    await changePcName(pcName)
+  
+  delete info.net
+  delete info.section
+  delete info.tomboCode
+
+  console.log(pcName)
+  console.log(info)
+
+  try {
+    await firebase.forms.collection('computer').doc(info.serial).set(info)
+  } catch (error) {
+    console.log(error)
+  }
+  
+  await timeout(3000)
 }
 
 function timeout(ms) {

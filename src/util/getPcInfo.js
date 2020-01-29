@@ -26,12 +26,8 @@ async function getPcInfo() {
   const netInfo = getIfaceByIp('10.77', nets)
 
   if (netInfo) {
-    data.ethernetMac = netInfo.mac;
-    if (netInfo.speed === 1000) {
-      data.velocityEthernet == "1gb";
-    } else {
-      data.velocityEthernet == "100mb";
-    }
+    data.mac = netInfo.mac;
+    data.netSpeed = netInfo.speed
   }
 
   data.net = getIfaceByIp('10.77', nets)
