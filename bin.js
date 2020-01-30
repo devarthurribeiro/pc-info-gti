@@ -1,120 +1,124 @@
-const readline = require('readline')
-const { exec } = require('child_process')
-const request = require('request')
+const readline = require("readline");
+const { exec } = require("child_process");
+const request = require("request");
 
-const getPcInfo = require("./src/util/getPcInfo")
-const sections = require('./src/sections')
+const getPcInfo = require("./src/util/getPcInfo");
+const sections = require("./src/sections");
 
-const CODE_UND = '1122'
+const CODE_UND = "1122";
 
 function readNextLine(question) {
-
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
-  })
-  
+  });
+
   return new Promise((resolve, reject) => {
-    rl.question(`${question}:`, (answer) => {
-      console.log(`resposta: ${answer}`)
-      resolve(answer)
-      rl.close()
-    })
-  })
+    rl.question(`${question}:`, answer => {
+      console.log(`resposta: ${answer}`);
+      resolve(answer);
+      rl.close();
+    });
+  });
 }
 
 function execShellCommand(cmd) {
-  console.log(cmd)
+  console.log(cmd);
   return new Promise((resolve, reject) => {
-   exec(cmd, (error, stdout, stderr) => {
-    if (error) {
-     console.warn(error)
-    }
-    resolve(stdout? stdout : stderr)
-   })
-  })
- }
+    exec(cmd, (error, stdout, stderr) => {
+      if (error) {
+        console.warn(error);
+      }
+      resolve(stdout ? stdout : stderr);
+    });
+  });
+}
 
 function changePcName(newName) {
-  return execShellCommand("WMIC COMPUTERSYSTEM WHERE CAPTION='%computername%' RENAME '"+newName.trim()+"'")
+  return execShellCommand(
+    "WMIC COMPUTERSYSTEM WHERE CAPTION='%computername%' RENAME '" +
+      newName.trim() +
+      "'"
+  );
 }
 
 function isSo(so, comp) {
-  return so.toUpperCase().includes(comp)
-} 
+  return so.toUpperCase().includes(comp);
+}
 
 function getSoCode(so) {
-  let code = 'N'
+  let code = "N";
 
-  if(isSo(so, 'LINUX'))
-    code = 'L'
-  else if(isSo(so, 'WINDOW'))
-    code = 'W'
-  else if(isSo(so, 'MAC'))
-    code = 'M'
+  if (isSo(so, "LINUX")) code = "L";
+  else if (isSo(so, "WINDOW")) code = "W";
+  else if (isSo(so, "MAC")) code = "M";
 
-  return code
+  return code;
 }
 
-function getSectionCode(ip) {
-
-}
+function getSectionCode(ip) {}
 
 function generateName(pcInfo) {
   let name = `
-      ${CODE_UND}-${pcInfo.section.name}-${ pcInfo.tomboCode.length === 4 ?  pcInfo.tomboCode : 'PPPP'}${pcInfo.type}${getSoCode(pcInfo.so)}
-    `.trim()
-  return name
+      ${CODE_UND}-${pcInfo.section.name}-${
+    pcInfo.tomboCode.length === 4 ? pcInfo.tomboCode : "PPPP"
+  }${pcInfo.type}${getSoCode(pcInfo.so)}
+    `.trim();
+  return name;
 }
 
 function getLastDigits(text, n) {
-  return text.slice(text.length - n, text.length)
+  return text.slice(text.length - n, text.length);
 }
 
 async function startApp() {
-  const info = await getPcInfo()
-  const tombo = await readNextLine('INFORMO O TOMBO DA MAQUINA')
-  const type = await readNextLine('TIPO DO EQUIPAMENTO: \n 1 - DESKTOP \n 2 - NOTEBOOK \n')
+  const info = await getPcInfo();
+  const tombo = await readNextLine("INFORMO O TOMBO DA MAQUINA");
+  const type = await readNextLine(
+    "TIPO DO EQUIPAMENTO: \n 1 - DESKTOP \n 2 - NOTEBOOK \n"
+  );
 
+  info.tombo = tombo;
+  info.type = type === "1" || "" ? "D" : "N";
 
-  info.tombo = tombo
-  info.type = ((type === '1' || '') ? 'D' : 'N')
+  info.tomboCode = getLastDigits(tombo, 4);
+  info.vlan = info.net.ip4.split(".")[2];
+  info.section = sections.find(s => info.vlan >= s.init && info.vlan <= s.end);
 
-  info.tomboCode = getLastDigits(tombo, 4)
-  info.vlan = info.net.ip4.split('.')[2]
-  info.section = sections.find( s => (info.vlan >= s.init && info.vlan <= s.end))
+  const pcName = generateName(info);
+  const soCode = getSoCode(info.so);
 
-  const pcName = generateName(info)
-  const soCode = getSoCode(info.so)
+  info.soCode = soCode;
+  info.pcName = pcName;
+  info.vlanId = info.section.vlan_id;
 
-  info.soCode = soCode
-  info.pcName = pcName
-  info.vlanId = info.section.vlan_id
-  
-  if(isSo(info.so, 'WINDOW'))
-    await changePcName(pcName)
-  
-  delete info.net
-  delete info.section
-  delete info.tomboCode
+  if (isSo(info.so, "WINDOW")) await changePcName(pcName);
 
-  console.log(pcName)
-  console.log(info)
+  delete info.net;
+  delete info.section;
+  delete info.tomboCode;
 
-  request.post('http://10.77.63.41:3000/api/save', { json: info }, (error, res, body) => {
-    if (error) {
-      console.error(error)
-      return
+  console.log(pcName);
+  console.log(info);
+
+  request.post(
+    "http://10.77.63.41:3000/api/save",
+    { json: info },
+    (error, res, body) => {
+      if (error) {
+        console.error(error);
+        return;
+      }
+      console.log(`statusCode: ${res.statusCode}`);
+      console.log(body);
     }
-    console.log(`statusCode: ${res.statusCode}`)
-    console.log(body)
-  })
-  
-  await timeout(3000)
+  );
+
+  await timeout(3000);
 }
 
 function timeout(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-startApp()
+startApp();

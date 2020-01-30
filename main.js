@@ -1,5 +1,5 @@
 const { app, BrowserWindow } = require("electron");
-const getPcInfo = require("./src/util/getPcInfo")
+const getPcInfo = require("./src/util/getPcInfo");
 
 let mainWindow;
 
@@ -18,8 +18,8 @@ async function createWindow(data) {
 }
 
 app.on("ready", async () => {
-    const data = await getPcInfo();
-    createWindow(data)
+  const data = await getPcInfo();
+  createWindow(data);
 });
 
 app.on("window-all-closed", function() {
