@@ -97,6 +97,7 @@ async function startApp() {
   delete info.net;
   delete info.section;
   delete info.tomboCode;
+  delete info.vlan
 
   info.date = new Date().getTime()
 
