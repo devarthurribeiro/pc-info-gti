@@ -79,7 +79,7 @@ async function startApp() {
   );
 
   info.tombo = tombo;
-  info.type = type === "1" || "" ? "D" : "N";
+  info.type = type === "2" || "" ? "N" : "D";
 
   info.tomboCode = getLastDigits(tombo, 4);
   info.vlan = info.net.ip4.split(".")[2];
@@ -97,6 +97,8 @@ async function startApp() {
   delete info.net;
   delete info.section;
   delete info.tomboCode;
+
+  info.date = new Date().getTime()
 
   console.log(pcName);
   console.log(info);
