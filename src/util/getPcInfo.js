@@ -40,7 +40,7 @@ function getIfaceByIp(ip, ifaces) {
 }
 
 function formatBytes(bytes) {
-  const marker = 1024;
+  const marker = 1000;
   const decimal = 3;
   const gigaBytes = marker * marker * marker;
   return Math.floor((bytes / gigaBytes).toFixed(decimal));
