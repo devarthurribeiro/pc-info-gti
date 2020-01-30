@@ -1,77 +1,17 @@
-const readline = require("readline");
-const { exec } = require("child_process");
 const request = require("request");
 
-const getPcInfo = require("./src/util/getPcInfo");
+const getPcInfo = require("./src/getPcInfo");
 const sections = require("./src/sections");
 
-const CODE_UND = "1122";
 
-function readNextLine(question) {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
+const isSo = require('./src/util/isSo');
+const getSoCode = require('./src/util/getSoCode');
+const readNextLine = require('./src/util/readNextLine');
+const changePcName = require('./src/util/changePcName');
+const getLastDigits = require('./src/util/getLastDigits');
+const generateHostname = require('./src/util/generateHostname');
 
-  return new Promise((resolve, reject) => {
-    rl.question(`${question}:`, answer => {
-      console.log(`resposta: ${answer}`);
-      resolve(answer);
-      rl.close();
-    });
-  });
-}
-
-function execShellCommand(cmd) {
-  console.log(cmd);
-  return new Promise((resolve, reject) => {
-    exec(cmd, (error, stdout, stderr) => {
-      if (error) {
-        console.warn(error);
-      }
-      resolve(stdout ? stdout : stderr);
-    });
-  });
-}
-
-function changePcName(newName) {
-  return execShellCommand(
-    "WMIC COMPUTERSYSTEM WHERE CAPTION='%computername%' RENAME '" +
-      newName.trim() +
-      "'"
-  );
-}
-
-function isSo(so, comp) {
-  return so.toUpperCase().includes(comp);
-}
-
-function getSoCode(so) {
-  let code = "N";
-
-  if (isSo(so, "LINUX")) code = "L";
-  else if (isSo(so, "WINDOW")) code = "W";
-  else if (isSo(so, "MAC")) code = "M";
-
-  return code;
-}
-
-function getSectionCode(ip) {}
-
-function generateName(pcInfo) {
-  let name = `
-      ${CODE_UND}-${pcInfo.section.name}-${
-    pcInfo.tomboCode.length === 4 ? pcInfo.tomboCode : "PPPP"
-  }${pcInfo.type}${getSoCode(pcInfo.so)}
-    `.trim();
-  return name;
-}
-
-function getLastDigits(text, n) {
-  return text.slice(text.length - n, text.length);
-}
-
-async function startApp() {
+async function startScript() {
   const info = await getPcInfo();
   const tombo = await readNextLine("INFORMO O TOMBO DA MAQUINA");
   const type = await readNextLine(
@@ -85,7 +25,7 @@ async function startApp() {
   info.vlan = info.net.ip4.split(".")[2];
   info.section = sections.find(s => info.vlan >= s.init && info.vlan <= s.end);
 
-  const pcName = generateName(info);
+  const pcName = generateHostname(info);
   const soCode = getSoCode(info.so);
 
   info.soCode = soCode;
@@ -124,4 +64,4 @@ function timeout(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-startApp();
+startScript();
