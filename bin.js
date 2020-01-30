@@ -3,16 +3,38 @@ const request = require("request");
 const getPcInfo = require("./src/getPcInfo");
 const sections = require("./src/sections");
 
+const isSo = require("./src/util/isSo");
+const getSoCode = require("./src/util/getSoCode");
+const readNextLine = require("./src/util/readNextLine");
+const changePcName = require("./src/util/changePcName");
+const getLastDigits = require("./src/util/getLastDigits");
+const generateHostname = require("./src/util/generateHostname");
 
-const isSo = require('./src/util/isSo');
-const getSoCode = require('./src/util/getSoCode');
-const readNextLine = require('./src/util/readNextLine');
-const changePcName = require('./src/util/changePcName');
-const getLastDigits = require('./src/util/getLastDigits');
-const generateHostname = require('./src/util/generateHostname');
+function sendData(data) {
+  return new Promise((resolve, reject) => {
+    request.post(
+      "https://pc-info-api.now.sh/api/save",
+      { json: data },
+      (error, res, body) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(res);
+      }
+    );
+  });
+}
 
 async function startScript() {
   const info = await getPcInfo();
+
+  if (!info.ip4) {
+    console.log("VERIFIQUE SUA CONEXÃO COM A INTERNET!");
+    await timeout(5000);
+    return;
+  }
+
   const tombo = await readNextLine("INFORMO O TOMBO DA MAQUINA");
   const type = await readNextLine(
     "TIPO DO EQUIPAMENTO: \n 1 - DESKTOP \n 2 - NOTEBOOK \n"
@@ -37,25 +59,19 @@ async function startScript() {
   delete info.net;
   delete info.section;
   delete info.tomboCode;
-  delete info.vlan
+  delete info.vlan;
 
-  info.date = new Date().getTime()
+  info.date = new Date().getTime();
 
   console.log(pcName);
   console.log(info);
 
-  request.post(
-    "https://pc-info-api.now.sh/api/save",
-    { json: info },
-    (error, res, body) => {
-      if (error) {
-        console.error(error);
-        return;
-      }
-      console.log(`statusCode: ${res.statusCode}`);
-      console.log(body);
-    }
-  );
+  try {
+    const result = await sendData(info);
+  } catch (error) {
+    console.log("Erro ao enviar dados:");
+    console.log(error);
+  }
 
   await timeout(3000);
 }
