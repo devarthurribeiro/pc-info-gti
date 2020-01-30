@@ -8,7 +8,6 @@ function readNextLine(question) {
 
   return new Promise((resolve, reject) => {
     rl.question(`${question}:`, answer => {
-      console.log(`resposta: ${answer}`);
       resolve(answer);
       rl.close();
     });
