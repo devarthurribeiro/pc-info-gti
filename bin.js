@@ -102,7 +102,7 @@ async function startApp() {
   console.log(info);
 
   request.post(
-    "http://10.77.63.41:3000/api/save",
+    "https://pc-info-api.now.sh/api/save",
     { json: info },
     (error, res, body) => {
       if (error) {
