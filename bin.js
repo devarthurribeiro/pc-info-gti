@@ -58,10 +58,6 @@ async function startScript() {
   info.vlan = info.net.ip4.split(".")[2];
   info.section = sections.find(s => info.vlan >= s.init && info.vlan <= s.end);
 
-  if (!info.section) {
-    info.section = sections[0];
-  }
-
   const pcName = generateHostname(info);
   const soCode = getSoCode(info.so);
 

@@ -1,5 +1,13 @@
 # pc-info-gti
-pick up computer information!
+
+> pick up computer information!
+
+<p align="center">
+	<br>
+	<img src="assets/demo.gif" width="500">
+	<br>
+</p>
+
 
 Esse sofware foi desenvolvido para suprir uma demanda do setor de gerência de TI da EAJ-UFRN.
 Ao ser executado ele recuperar informações de hardware e sofware, que são utilizadas para 
