@@ -9,6 +9,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "ora": "^4.0.3",
     "systeminformation": "^4.16.0"
   },
   "devDependencies": {

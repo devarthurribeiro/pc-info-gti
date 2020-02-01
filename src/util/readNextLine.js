@@ -7,7 +7,7 @@ function readNextLine(question) {
   });
 
   return new Promise((resolve, reject) => {
-    rl.question(`${question}:`, answer => {
+    rl.question(`${question}\n`, answer => {
       resolve(answer);
       rl.close();
     });

@@ -1,4 +1,5 @@
 const request = require("request");
+const ora = require("ora");
 
 const getPcInfo = require("./src/getPcInfo");
 const sections = require("./src/sections");
@@ -27,7 +28,15 @@ function sendData(data) {
 }
 
 async function startScript() {
+  console.clear();
+  const spinner = ora("Buscando informações!").start();
+  spinner.color = "blue";
+
   const info = await getPcInfo();
+
+  spinner.stop();
+  spinner.text = "Enviando dados!";
+  spinner.color = "green";
 
   if (!info.net) {
     console.log("VERIFIQUE SUA CONEXÃO COM A INTERNET!");
@@ -35,9 +44,11 @@ async function startScript() {
     return;
   }
 
-  const tombo = await readNextLine("INFORMO O TOMBO DA MAQUINA");
+  console.log("PC INFO - GTI\n");
+
+  const tombo = await readNextLine("INFORMO O TOMBO DA MÁQUINA");
   const type = await readNextLine(
-    "TIPO DO EQUIPAMENTO: \n 1 - DESKTOP \n 2 - NOTEBOOK \n"
+    "\nTIPO DO EQUIPAMENTO \n1 - DESKTOP \n2 - NOTEBOOK"
   );
 
   info.tombo = tombo;
@@ -46,6 +57,10 @@ async function startScript() {
   info.tomboCode = getLastDigits(tombo, 4);
   info.vlan = info.net.ip4.split(".")[2];
   info.section = sections.find(s => info.vlan >= s.init && info.vlan <= s.end);
+
+  if (!info.section) {
+    info.section = sections[0];
+  }
 
   const pcName = generateHostname(info);
   const soCode = getSoCode(info.so);
@@ -63,15 +78,19 @@ async function startScript() {
 
   info.date = new Date().getTime();
 
-  console.log(pcName);
-  console.log(info);
+  console.info("HOSTNAME: ", pcName);
 
   try {
+    spinner.start();
     const result = await sendData(info);
   } catch (error) {
     console.log("Erro ao enviar dados:");
     console.log(error);
+  } finally {
+    spinner.stop();
   }
+
+  console.table(info);
 
   await timeout(3000);
 }
