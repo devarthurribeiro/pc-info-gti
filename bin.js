@@ -29,7 +29,7 @@ function sendData(data) {
 async function startScript() {
   const info = await getPcInfo();
 
-  if (!info.ip4) {
+  if (!info.net) {
     console.log("VERIFIQUE SUA CONEXÃO COM A INTERNET!");
     await timeout(5000);
     return;
