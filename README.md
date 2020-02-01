@@ -1,6 +1,6 @@
 # pc-info-gti
 
-> pick up computer information!
+> pick up computer information! (this is internal software)
 
 <p align="center">
 	<br>
