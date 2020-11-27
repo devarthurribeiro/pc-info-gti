@@ -10,7 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "ora": "^4.0.3",
-    "systeminformation": "^4.16.0"
+    "systeminformation": "^4.30.5"
   },
   "devDependencies": {
     "electron": "^7.1.3",
